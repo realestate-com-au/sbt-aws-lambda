@@ -91,7 +91,8 @@ object AwsLambdaPlugin extends AutoPlugin {
     AwsS3.pushJarToS3(jar, resolvedBucketId, resolvedS3KeyPrefix) match {
       case Success(s3Key) =>
         for ((resolvedLambdaName, resolvedHandlerName) <- resolvedLambdaHandlers) yield {
-          AwsLambda.createLambda(resolvedRegion, jar, resolvedLambdaName, resolvedHandlerName, resolvedRoleName, resolvedBucketId, resolvedTimeout, resolvedMemory) match {
+          AwsLambda.createLambda(resolvedRegion, jar, resolvedLambdaName, resolvedHandlerName, resolvedRoleName,
+            resolvedBucketId, resolvedS3KeyPrefix, resolvedTimeout, resolvedMemory) match {
             case Success(createFunctionCodeResult) =>
               resolvedLambdaName.value -> LambdaARN(createFunctionCodeResult.getFunctionArn)
             case Failure(exception) =>

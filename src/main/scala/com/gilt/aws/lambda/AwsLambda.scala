@@ -41,6 +41,7 @@ private[lambda] object AwsLambda {
                    handlerName: HandlerName,
                    roleName: RoleARN,
                    s3BucketId: S3BucketId,
+                   s3Prefix: String,
                    timeout:  Option[Timeout],
                    memory: Option[Memory]
                     ): Try[CreateFunctionResult] = {
@@ -60,7 +61,7 @@ private[lambda] object AwsLambda {
         val functionCode = {
           val c = new FunctionCode
           c.setS3Bucket(s3BucketId.value)
-          c.setS3Key(jar.getName)
+          c.setS3Key(s3Prefix + jar.getName)
           c
         }
 
