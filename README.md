@@ -1,17 +1,15 @@
-# sbt-aws-lambda
+# simple-sbt-aws-lambda
 
-sbt plugin to deploy code to AWS Lambda
+SBT plugin to easily deploy Scala code to named AWS Lambda endpoints. The plugin aims to complement rather than duplication the capabilities
+of cloudformation.
 
-[![Join the chat at https://gitter.im/gilt/sbt-aws-lambda](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/gilt/sbt-aws-lambda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)  [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.gilt.sbt/sbt-aws-lambda/badge.svg?style=plastic)](https://maven-badges.herokuapp.com/maven-central/com.gilt.sbt/sbt-aws-lambda)
 
-
-Installation
-------------
+##Installation
 
 Add the following to your `project/plugins.sbt` file:
 
 ```scala
-addSbtPlugin("com.gilt.sbt" % "sbt-aws-lambda" % "0.4.2")
+addSbtPlugin("com.rea-group" % "simple-sbt-aws-lambda" % "0.1")
 ```
 
 Add the `AwsLambdaPlugin` auto-plugin to your build.sbt:
@@ -20,69 +18,88 @@ Add the `AwsLambdaPlugin` auto-plugin to your build.sbt:
 enablePlugins(AwsLambdaPlugin)
 ```
 
+##Usage
 
-
-Usage
--------------
-`sbt createLambda` creates a new AWS Lambda function from the current project.
-
-`sbt updateLambda` updates an existing AWS Lambda function with the current project.
-
-
-Configuration
--------------
-
-sbt-aws-lambda can be configured using sbt settings, environment variables or by reading user input at deploy time
-
-| sbt setting   |      Environment variable      |  Description |
-|:----------|:-------------:|:------|
-| s3Bucket |  AWS_LAMBDA_BUCKET_ID | The name of an S3 bucket where the lambda code will be stored |
-| s3KeyPrefix | AWS_LAMBDA_S3_KEY_PREFIX | The prefix to the S3 key where the jar will be uploaded |
-| lambdaName |    AWS_LAMBDA_NAME   |   The name to use for this AWS Lambda function. Defaults to the project name |
-| handlerName | AWS_LAMBDA_HANDLER_NAME |    Java class name and method to be executed, e.g. `com.gilt.example.Lambda::myMethod` |
-| roleArn | AWS_LAMBDA_IAM_ROLE_ARN |The [ARN](http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html "AWS ARN documentation") of an [IAM](https://aws.amazon.com/iam/ "AWS IAM documentation") role to use when creating a new Lambda |
-| region |  AWS_REGION | The name of the AWS region to connect to. Defaults to `us-east-1` |
-| awsLambdaTimeout |            | The Lambda timeout in seconds (1-300). Defaults to AWS default. |
-| awsLambdaMemory |             | The amount of memory in MB for the Lambda function (128-1536, multiple of 64). Defaults to AWS default. |
-| lambdaHandlers |              | Sequence of Lambda names to handler functions (for multiple lambda methods per project). Overrides `lambdaName` and `handlerName` if present. | 
-
-An example configuration might look like this:
-
+###Minimal Example Config
 
 ```scala
-retrieveManaged := true
+lambdaHandlers = Map("myLambda" -> "com.mycompany.MyObject::myMethod")
 
-enablePlugins(AwsLambdaPlugin)
+roleARN = "arn:aws:iam::xxxx:role/lambda_basic_exec"
 
-lambdaHandlers := Seq(
-  "function1"                 -> "com.gilt.example.Lambda::handleRequest1",
-  "function2"                 -> "com.gilt.example.Lambda::handleRequest2",
-  "function3"                 -> "com.gilt.example.OtherLambda::handleRequest3"
-)
-
-// or, instead of the above, for just one function/handler
-//
-// lambdaName := Some("function1")
-//
-// handlerName := Some("com.gilt.example.Lambda::handleRequest1")
-
-s3Bucket := Some("lambda-jars")
-
-awsLambdaMemory := Some(192)
-
-awsLambdaTimeout := Some(30)
-
-roleArn := Some("arn:aws:iam::123456789000:role/lambda_basic_execution")
-
+region := Some("ap-southeast-2")
 ```
-(note that you will need to use a real ARN for your role rather than copying this one).
 
+###Specifying Lambda Handlers
 
-Publishing new versions of this plugin
---------------------------------------
-
-This plugin uses [sbt-sonatype](https://github.com/xerial/sbt-sonatype) to publish to Gilt's account on maven central
-
+You must specify a `Map` of lambda handlers; each associates
+a lambda name against a method on a scala object, which will be invoked by the lambda.
+```scala
+lambdaHandlers = Map("myLambda" -> "com.mycompany.MyObject::myMethod")
 ```
-sbt publishSigned sonatypeRelease
-```
+
+###Deploy Command
+
+`deployLambda` creates or updates one or more AWS Lambda function from the current project.
+
+For each lambda handler entry, it searches for an existing handler using [`GetFunctionRequest`](http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/lambda/model/GetFunctionRequest.html).
+If the named lambda exists, then its code is updated using [`UpdateFunctionCodeRequest`](http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/lambda/model/UpdateFunctionCodeRequest.html).
+Otherwise, the lambda is created using [`CreateFunctionRequest`](http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/lambda/model/CreateFunctionRequest.html)
+
+*Note: if you remove an existing handler from the settings and run `deployLambda`, the corresponding lambda will not be cleaned up.*
+
+
+###Deployment Methods
+
+The application will be packaged into a "fat" jar (ie including all dependent libraries) using [sbt-assembly](https://github.com/sbt/sbt-assembly).
+
+Two deployment pathways are supported:
+
+*Direct (default):* Zips the application bytecode in a memory `ByteBuffer` and directly uploads to lambda via the [Java SDK API](http://docs.aws.amazon.com/lambda/latest/dg/API_FunctionCode.html).
+Specify `"Direct"` to use this method.
+
+*Via S3: * Uploading via an S3 bucket. Specify `"S3"` to use this method, and the `s3Bucket` (and optionally `s3KeyPrefix`) settings
+should be provided to indicate the bucket location to use.
+
+###The Role ARN Setting
+
+You must specify a [`roleArn`](http://docs.aws.amazon.com/lambda/latest/dg/intro-permission-model.html#lambda-intro-execution-role),
+which identifies the AWS role the lambda will run as.
+
+###Specifying Region
+
+The AWS Region the API calls must be specified either via the `region` setting, or if unspecified via the environment variable [`AWS_DEFAULT_REGION`](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-environment)
+
+###Authentication
+
+When making API calls, this plugin uses the Java SDKs [DefaultAWSCredentialsProviderChain](http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/DefaultAWSCredentialsProviderChain.html)
+which searches for credentials in standard locations; see linked documentation for details.
+
+
+##SBT Settings Reference
+
+| sbt setting   |    Description |
+|:--------------|:-------------:|
+| lambdaHandlers |Map of Lambda function names to handlers. Required |
+| deployMethod | `Direct`: directly upload a jar file, `S3`: upload the jar to S3 bucket. Optional, defaults to Direct |
+| s3Bucket |ID of the S3 bucket where the jar will be uploaded. Required if deployMethod = S3) |
+| s3KeyPrefix |The prefix to the S3 key where the jar will be uploaded. Applicable but optional if deployMethod = S3, default is empty string |
+| roleArn |ARN of the IAM role for the Lambda function. Required. |
+| region |Name of the AWS region to connect to. Optional but if not specified env var AWS_DEFAULT_REGION must be set |
+| awsLambdaTimeout |Optional Lambda timeout length in seconds (1-300). Optional, defaults to AWS default |
+| awsLambdaMemory |Optional memory in MB for the Lambda function (128-1536, multiple of 64). Optional, defaults to AWS default |
+
+
+##Credits & changes vs `sbt-aws-lambda` plugin
+
+The plugin derives from the [plugin by Gilt](https://github.com/gilt/sbt-aws-lambda). Thanks & credits to the Gilt developers for leading the way.
+
+Changes relative to `sbt-aws-lambda` as at Feb 2017:
+
+- Simplify commands and configuration settings, remove multiple conflicting ways to specify the lambda handlers
+- Incorporate unmerged fixes from @benhutchison
+- Incorporate valuable unmerged features from @silvaren (Direct deployment) and @hussachai (Combine create/update operations into deploy)
+- Greatly simplify code structure and reduce lines of code making contribution & maintenance easier. Involved removing some abstraction that IMO wasn't really earning it's place.
+- Remove non-core feature: read settings from environment. It can be readily achieved by eg `roleARN := sys.env.getOrElse("AWS_ROLE", default = "a role arn...")`
+- Remove non-core features around creating AWS roles. Use cloudformation or the CLI for this.
+- Remove non-core features around prompting user for settings. Script it.

@@ -13,13 +13,13 @@ publishArtifact in Test := false
 
 pomIncludeRepository := { _ => false }
 
-sonatypeProfileName := "com.gilt"
+sonatypeProfileName := "com.rea-group"
 
 pomExtra := {
-  <url>https://github.com/gilt/sbt-aws-lambda</url>
+  <url>https://github.com/realestate-com-au</url>
   <scm>
-    <url>git@github.com:gilt/sbt-aws-lambda.git</url>
-    <connection>scm:git:git@github.com:gilt/sbt-aws-lambda.git</connection>
+    <url>git@github.com:realestate-com-au/simple-sbt-aws-lambda</url>
+    <connection>scm:git:git@github.com:realestate-com-au/simple-sbt-aws-lambda.git</connection>
   </scm>
   <licenses>
     <license>
@@ -29,14 +29,9 @@ pomExtra := {
   </licenses>
   <developers>
     <developer>
-      <id>bstjohn</id>
-      <name>Brendan St John</name>
-      <url>https://github.com/stjohnb</url>
-    </developer>
-    <developer>
-      <id>fiadliel</id>
-      <name>Gary Coady</name>
-      <url>https://github.com/fiadliel</url>
+      <id>benhutchison</id>
+      <name>Ben Hutchison</name>
+      <url>https://github.com/benhutchison</url>
     </developer>
   </developers>
 }
