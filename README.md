@@ -9,7 +9,7 @@ of cloudformation.
 Add the following to your `project/plugins.sbt` file:
 
 ```scala
-addSbtPlugin("com.rea-group" % "simple-sbt-aws-lambda" % "0.1")
+addSbtPlugin("com.rea-group" % "simple-sbt-aws-lambda" % "0.2")
 ```
 
 Add the `AwsLambdaPlugin` auto-plugin to your build.sbt:
@@ -88,6 +88,7 @@ which searches for credentials in standard locations; see linked documentation f
 | region |Name of the AWS region to connect to. Optional but if not specified env var AWS_DEFAULT_REGION must be set |
 | awsLambdaTimeout |Optional Lambda timeout length in seconds (1-300). Optional, defaults to AWS default |
 | awsLambdaMemory |Optional memory in MB for the Lambda function (128-1536, multiple of 64). Optional, defaults to AWS default |
+| awsLambdaVpcConfig |Pair of lists, the first containing a list of subnet IDs the lambda needs to access, the second a list of security groups IDs in the VPC the lambda accesses. Optional |
 
 
 ##Credits & changes vs `sbt-aws-lambda` plugin
@@ -96,6 +97,7 @@ The plugin derives from the [plugin by Gilt](https://github.com/gilt/sbt-aws-lam
 
 Changes relative to `sbt-aws-lambda` as at Feb 2017:
 
+- Support VpcConfig
 - Simplify commands and configuration settings, remove multiple conflicting ways to specify the lambda handlers
 - Incorporate unmerged fixes from @benhutchison
 - Incorporate valuable unmerged features from @silvaren (Direct deployment) and @hussachai (Combine create/update operations into deploy)

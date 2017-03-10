@@ -13,6 +13,8 @@ import sbt._
 
 import scala.util.Either
 
+import collection.JavaConverters._
+
 object AwsLambdaPlugin extends AutoPlugin {
 
   object autoImport {
@@ -26,6 +28,8 @@ object AwsLambdaPlugin extends AutoPlugin {
     val awsLambdaTimeout = settingKey[Option[Int]]("Optional Lambda timeout length in seconds (1-300). Optional, defaults to AWS default")
     val awsLambdaMemory = settingKey[Option[Int]]("Optional memory in MB for the Lambda function (128-1536, multiple of 64). Optional, defaults to AWS default")
     val lambdaHandlers = settingKey[Map[String, String]]("Map of Lambda function names to handlers. Required")
+    val awsLambdaVpcConfig = settingKey[Option[(List[String], List[String])]]("Pair of lists, the first containing a list of subnet IDs the lambda needs to access, " +
+      "the second a list of security groups IDs in the VPC the lambda accesses. Optional")
   }
 
   import autoImport._
@@ -34,11 +38,11 @@ object AwsLambdaPlugin extends AutoPlugin {
 
   override lazy val projectSettings = Seq(
     deployMethod := None,
-    awsLambdaTimeout := None,
     s3Bucket := None,
     s3KeyPrefix := None,
     awsLambdaTimeout := None,
     awsLambdaMemory := None,
+    awsLambdaVpcConfig := None,
     lambdaHandlers := Map.empty,
     deployLambda := deployMethodSetting.value.deploy(
       sbtassembly.AssemblyKeys.assembly.value,
@@ -72,7 +76,8 @@ object AwsLambdaPlugin extends AutoPlugin {
     regionSetting.value,
     roleArn.value,
     awsLambdaTimeout.value,
-    awsLambdaMemory.value
+    awsLambdaMemory.value,
+    awsLambdaVpcConfig.value
   ))
 
   def lambdaExists(functionName: String, lambdaClient: AWSLambdaClient) = try {
@@ -133,6 +138,12 @@ sealed trait DeployMethod {
         r.setRuntime(com.amazonaws.services.lambda.model.Runtime.Java8)
         params.timeout.foreach(r.setTimeout(_))
         params.memory.foreach(r.setMemorySize(_))
+        params.vpcConfig.foreach(value => {
+          val c = new VpcConfig()
+          c.setSubnetIds(value._1.asJavaCollection)
+          c.setSecurityGroupIds(value._2.asJavaCollection)
+          r.setVpcConfig(c)
+        })
 
         val functionCode = createFunctionCode(jar)
         r.setCode(functionCode)
@@ -210,12 +221,18 @@ case class LambdaDeployParams(lambdaHandlers: Map[String, String],
                                              region: Region,
                                              roleArn: String,
                                              timeout: Option[Int],
-                                             memory: Option[Int]) {
+                                             memory: Option[Int],
+                                             vpcConfig: Option[(List[String], List[String])]
+                             ) {
 
   timeout.foreach(value =>
     require(value > 0 && value <= 300, "Lambda timeout must be between 1 and 300 seconds"))
   memory.foreach(value => {
     require(value >= 128 && value <= 1536, "Lambda memory must be between 128 and 1536 MBs")
     require(value % 64 == 0, "Lambda memory MBs must be multiple of 64")
+  })
+  vpcConfig.foreach(value => {
+    require(value._1.nonEmpty, "If VPC Config is specified, at least one Subnet ID must be provided")
+    require(value._2.nonEmpty, "If VPC Config is specified, at least one Security Group ID must be provided")
   })
 }
