@@ -24,7 +24,7 @@ object AwsLambdaPlugin extends AutoPlugin {
     val s3Bucket = settingKey[Option[String]]("ID of the S3 bucket where the jar will be uploaded. Required if deployMethod = S3)")
     val s3KeyPrefix = settingKey[Option[String]]("The prefix to the S3 key where the jar will be uploaded. Applicable but optional if deployMethod = S3, default is empty string")
     val roleArn = settingKey[String]("ARN of the IAM role for the Lambda function. Required.")
-    val region = settingKey[Option[String]]("Name of the AWS region to connect to. Optional but if not specified env var AWS_DEFAULT_REGION must be set")
+    val region = settingKey[Option[String]]("Name of the AWS region to connect to. Optional but if not specified env var AWS_DEFAULT_REGION must be set. Cannot be changed updated set.")
     val awsLambdaTimeout = settingKey[Option[Int]]("Optional Lambda timeout length in seconds (1-300). Optional, defaults to AWS default")
     val awsLambdaMemory = settingKey[Option[Int]]("Optional memory in MB for the Lambda function (128-1536, multiple of 64). Optional, defaults to AWS default")
     val lambdaHandlers = settingKey[Map[String, String]]("Map of Lambda function names to handlers. Required")
@@ -113,6 +113,7 @@ sealed trait DeployMethod {
 
   def prepare(jar: File): Unit
 
+
   def deployLambda(jar: File,
                    functionName: String,
                    handlerName: String,
@@ -125,6 +126,8 @@ sealed trait DeployMethod {
     if (AwsLambdaPlugin.lambdaExists(functionName, lambdaClient)) {
       val request = createUpdateFunctionCodeRequest(jar, functionName)
       val updateResult = lambdaClient.updateFunctionCode(request)
+      val configRequest = createUpdateFunctionConfigRequest(functionName, handlerName, params)
+      val updateConfigResult = lambdaClient.updateFunctionConfiguration(configRequest)
 
       println(s"Updated lambda ${updateResult.getFunctionArn}")
       Right(updateResult)
@@ -149,6 +152,7 @@ sealed trait DeployMethod {
         r.setCode(functionCode)
         r
       }
+
       val createResult = lambdaClient.createFunction(request)
 
       println(s"Created Lambda: ${createResult.getFunctionArn}")
@@ -159,6 +163,21 @@ sealed trait DeployMethod {
   def createUpdateFunctionCodeRequest(jar: File, lambdaName: String): UpdateFunctionCodeRequest
 
   def createFunctionCode(jar: File): FunctionCode
+
+
+  def createUpdateFunctionConfigRequest(functionName: String, handlerName: String, params: LambdaDeployParams) = {
+    val r = new UpdateFunctionConfigurationRequest()
+    r.setFunctionName(functionName)
+    r.setHandler(handlerName)
+    params.memory.foreach(r.setMemorySize(_))
+    params.timeout.foreach(r.setTimeout(_))
+    params.vpcConfig.foreach {
+      case (subnetIds, securityGroupIds) => r.setVpcConfig(
+        new VpcConfig().withSubnetIds(subnetIds.asJavaCollection).
+          withSecurityGroupIds(securityGroupIds.asJavaCollection))
+    }
+    r
+  }
 
 }
 case object Direct extends DeployMethod {
