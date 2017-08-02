@@ -30,6 +30,9 @@ object AwsLambdaPlugin extends AutoPlugin {
     val lambdaHandlers = settingKey[Map[String, String]]("Map of Lambda function names to handlers. Required")
     val awsLambdaVpcConfig = settingKey[Option[(List[String], List[String])]]("Pair of lists, the first containing a list of subnet IDs the lambda needs to access, " +
       "the second a list of security groups IDs in the VPC the lambda accesses. Optional")
+
+    val deployPrebuiltLambda = taskKey[Map[String, String]]("Deploy a prebuilt jar to AWS Lambda")
+    val prebuiltPath = settingKey[Option[String]]("Path to prebuilt jar file. Optional, only used with `deployPrebuiltLambda`")
   }
 
   import autoImport._
@@ -48,7 +51,18 @@ object AwsLambdaPlugin extends AutoPlugin {
       sbtassembly.AssemblyKeys.assembly.value,
       lambdaHandlers.value,
       deployParamsSetting.value
-    )
+    ),
+    prebuiltPath := None,
+    deployPrebuiltLambda := {
+      val file = new java.io.File(prebuiltPath.value.getOrElse(
+        sys.error("prebuiltPath setting must be defined to deployPrebuiltLambda")))
+      println(s"deployPrebuiltLambda from $file")
+      Direct.deploy(
+        file,
+        lambdaHandlers.value,
+        deployParamsSetting.value
+      )
+    }
   )
 
   val DeployDirect = "Direct"

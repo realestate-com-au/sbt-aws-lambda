@@ -48,6 +48,8 @@ Otherwise, the lambda is created using [`CreateFunctionRequest`](http://docs.aws
 
 *Note: if you remove an existing handler from the settings and run `deployLambda`, the corresponding lambda will not be cleaned up.*
 
+`deployPrebuiltLambda` deploys an existing jar file to AWS directly without packaging. It requires the `prebuiltPath` setting
+to be defined.
 
 ###Deployment Methods
 
@@ -89,6 +91,7 @@ which searches for credentials in standard locations; see linked documentation f
 | awsLambdaTimeout |Optional Lambda timeout length in seconds (1-300). Optional, defaults to AWS default |
 | awsLambdaMemory |Optional memory in MB for the Lambda function (128-1536, multiple of 64). Optional, defaults to AWS default |
 | awsLambdaVpcConfig |Pair of lists, the first containing a list of subnet IDs the lambda needs to access, the second a list of security groups IDs in the VPC the lambda accesses. Optional |
+| prebuiltPath |Local path to an existing lambda jar file. Only required by `deployPrebuiltLambda` task.  |
 
 ##Change Log
 
@@ -97,6 +100,7 @@ which searches for credentials in standard locations; see linked documentation f
 | 0.1 | Feb 2017 |Initial release |
 | 0.2 | Mar 2017 |Support VpcConfig settings on lambda create|
 | 0.3 | Mar 2017 |Support VpcConfig settings on lambda update|
+| 0.3 | Aug 2017 |Support deployPrebuiltLambda task|
 
 ##Credits & changes vs `sbt-aws-lambda` plugin
 
