@@ -96,7 +96,7 @@ which searches for credentials in standard locations; see linked documentation f
 ## Change Log
 
 | Version  | When  |    Description |
-|:--------------|:-------------:|
+|:--------------|:-------------:|:-------------:|
 | 0.1 | Feb 2017 |Initial release |
 | 0.2 | Mar 2017 |Support VpcConfig settings on lambda create|
 | 0.3 | Mar 2017 |Support VpcConfig settings on lambda update|
