@@ -4,12 +4,12 @@ SBT plugin to easily deploy Scala code to named AWS Lambda endpoints. The plugin
 of cloudformation.
 
 
-##Installation
+## Installation
 
 Add the following to your `project/plugins.sbt` file:
 
 ```scala
-addSbtPlugin("com.rea-group" % "simple-sbt-aws-lambda" % "0.2")
+addSbtPlugin("com.rea-group" % "simple-sbt-aws-lambda" % "0.4")
 ```
 
 Add the `AwsLambdaPlugin` auto-plugin to your build.sbt:
@@ -18,9 +18,9 @@ Add the `AwsLambdaPlugin` auto-plugin to your build.sbt:
 enablePlugins(AwsLambdaPlugin)
 ```
 
-##Usage
+## Usage
 
-###Minimal Example Config
+### Minimal Example Config
 
 ```scala
 lambdaHandlers = Map("myLambda" -> "com.mycompany.MyObject::myMethod")
@@ -30,7 +30,7 @@ roleARN = "arn:aws:iam::xxxx:role/lambda_basic_exec"
 region := Some("ap-southeast-2")
 ```
 
-###Specifying Lambda Handlers
+### Specifying Lambda Handlers
 
 You must specify a `Map` of lambda handlers; each associates
 a lambda name against a method on a scala object, which will be invoked by the lambda.
@@ -38,7 +38,7 @@ a lambda name against a method on a scala object, which will be invoked by the l
 lambdaHandlers = Map("myLambda" -> "com.mycompany.MyObject::myMethod")
 ```
 
-###Deploy Command
+### Deploy Command
 
 `deployLambda` creates or updates one or more AWS Lambda function from the current project.
 
@@ -51,7 +51,7 @@ Otherwise, the lambda is created using [`CreateFunctionRequest`](http://docs.aws
 `deployPrebuiltLambda` deploys an existing jar file to AWS directly without packaging. It requires the `prebuiltPath` setting
 to be defined.
 
-###Deployment Methods
+### Deployment Methods
 
 The application will be packaged into a "fat" jar (ie including all dependent libraries) using [sbt-assembly](https://github.com/sbt/sbt-assembly).
 
@@ -63,22 +63,22 @@ Specify `"Direct"` to use this method.
 *Via S3: * Uploading via an S3 bucket. Specify `"S3"` to use this method, and the `s3Bucket` (and optionally `s3KeyPrefix`) settings
 should be provided to indicate the bucket location to use.
 
-###The Role ARN Setting
+### The Role ARN Setting
 
 You must specify a [`roleArn`](http://docs.aws.amazon.com/lambda/latest/dg/intro-permission-model.html#lambda-intro-execution-role),
 which identifies the AWS role the lambda will run as.
 
-###Specifying Region
+### Specifying Region
 
 The AWS Region the API calls must be specified either via the `region` setting, or if unspecified via the environment variable [`AWS_DEFAULT_REGION`](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-environment)
 
-###Authentication
+### Authentication
 
 When making API calls, this plugin uses the Java SDKs [DefaultAWSCredentialsProviderChain](http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/DefaultAWSCredentialsProviderChain.html)
 which searches for credentials in standard locations; see linked documentation for details.
 
 
-##SBT Settings Reference
+## SBT Settings Reference
 
 | sbt setting   |    Description |
 |:--------------|:-------------:|
@@ -93,16 +93,16 @@ which searches for credentials in standard locations; see linked documentation f
 | awsLambdaVpcConfig |Pair of lists, the first containing a list of subnet IDs the lambda needs to access, the second a list of security groups IDs in the VPC the lambda accesses. Optional |
 | prebuiltPath |Local path to an existing lambda jar file. Only required by `deployPrebuiltLambda` task.  |
 
-##Change Log
+## Change Log
 
 | Version  | When  |    Description |
 |:--------------|:-------------:|
 | 0.1 | Feb 2017 |Initial release |
 | 0.2 | Mar 2017 |Support VpcConfig settings on lambda create|
 | 0.3 | Mar 2017 |Support VpcConfig settings on lambda update|
-| 0.3 | Aug 2017 |Support deployPrebuiltLambda task|
+| 0.4 | Aug 2017 |Support deployPrebuiltLambda task|
 
-##Credits & changes vs `sbt-aws-lambda` plugin
+## Credits & changes vs `sbt-aws-lambda` plugin
 
 The plugin derives from the [plugin by Gilt](https://github.com/gilt/sbt-aws-lambda). Thanks & credits to the Gilt developers for leading the way.
 
