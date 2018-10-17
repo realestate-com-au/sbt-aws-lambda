@@ -25,7 +25,7 @@ object AwsLambdaPlugin extends AutoPlugin {
     val s3KeyPrefix = settingKey[Option[String]]("The prefix to the S3 key where the jar will be uploaded. Applicable but optional if deployMethod = S3, default is empty string")
     val roleArn = settingKey[String]("ARN of the IAM role for the Lambda function. Required.")
     val region = settingKey[Option[String]]("Name of the AWS region to connect to. Optional but if not specified env var AWS_DEFAULT_REGION must be set. Cannot be changed updated set.")
-    val awsLambdaTimeout = settingKey[Option[Int]]("Optional Lambda timeout length in seconds (1-300). Optional, defaults to AWS default")
+    val awsLambdaTimeout = settingKey[Option[Int]]("Optional Lambda timeout length in seconds (1-900). Optional, defaults to AWS default")
     val awsLambdaMemory = settingKey[Option[Int]]("Optional memory in MB for the Lambda function (128-1536, multiple of 64). Optional, defaults to AWS default")
     val lambdaHandlers = settingKey[Map[String, String]]("Map of Lambda function names to handlers. Required")
     val awsLambdaVpcConfig = settingKey[Option[(List[String], List[String])]]("Pair of lists, the first containing a list of subnet IDs the lambda needs to access, " +
@@ -259,7 +259,7 @@ case class LambdaDeployParams(lambdaHandlers: Map[String, String],
                              ) {
 
   timeout.foreach(value =>
-    require(value > 0 && value <= 300, "Lambda timeout must be between 1 and 300 seconds"))
+    require(value > 0 && value <= 900, "Lambda timeout must be between 1 and 900 seconds"))
   memory.foreach(value => {
     require(value >= 128 && value <= 1536, "Lambda memory must be between 128 and 1536 MBs")
     require(value % 64 == 0, "Lambda memory MBs must be multiple of 64")

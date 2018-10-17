@@ -88,7 +88,7 @@ which searches for credentials in standard locations; see linked documentation f
 | s3KeyPrefix |The prefix to the S3 key where the jar will be uploaded. Applicable but optional if deployMethod = S3, default is empty string |
 | roleArn |ARN of the IAM role for the Lambda function. Required. |
 | region |Name of the AWS region to connect to. Optional but if not specified env var AWS_DEFAULT_REGION must be set |
-| awsLambdaTimeout |Optional Lambda timeout length in seconds (1-300). Optional, defaults to AWS default |
+| awsLambdaTimeout |Optional Lambda timeout length in seconds (1-900). Optional, defaults to AWS default |
 | awsLambdaMemory |Optional memory in MB for the Lambda function (128-1536, multiple of 64). Optional, defaults to AWS default |
 | awsLambdaVpcConfig |Pair of lists, the first containing a list of subnet IDs the lambda needs to access, the second a list of security groups IDs in the VPC the lambda accesses. Optional |
 | prebuiltPath |Local path to an existing lambda jar file. Only required by `deployPrebuiltLambda` task.  |
